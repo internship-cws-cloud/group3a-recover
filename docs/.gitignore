@@ -1,0 +1,26 @@
+# Terraform state holds every value it touched, in plaintext. Never commit it.
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Variable files carry account IDs, passwords and emails.
+*.tfvars
+*.tfvars.json
+!example.tfvars
+
+# Local environment and keys
+.env
+.env.*
+*.pem
+*.key
+
+# Python / Node
+__pycache__/
+*.pyc
+node_modules/
+venv/
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/

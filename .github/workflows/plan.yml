@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'first-terraform/infra/**'
-      - '.github/workflows/terraform-plan.yml'
+      - '.github/workflows/plan.yml'
 
 permissions:
   contents: read

@@ -1,8 +1,9 @@
 output "app_url" {
-  description = "Open this in a browser"
+  description = "Open this URL in a browser"
   value       = "http://${aws_lb.web.dns_name}"
 }
 
 output "db_endpoint" {
-  value = aws_db_instance.tasks.address
+  description = "RDS database endpoint"
+  value       = aws_db_instance.tasks.address
 }

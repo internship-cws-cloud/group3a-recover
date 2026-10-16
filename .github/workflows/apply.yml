@@ -5,7 +5,11 @@ on:
     branches:
       - main
     paths:
+<<<<<<< HEAD
       - 'first-terraform/infra/**'
+=======
+      - 'infra/**'
+>>>>>>> 1240d8b (Fix Terraform workflow directory paths)
       - '.github/workflows/apply.yml'
 
 permissions:
@@ -19,7 +23,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: first-terraform/infra
+        working-directory: infra
 
     steps:
       - name: Checkout repository

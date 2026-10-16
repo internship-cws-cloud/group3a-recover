@@ -1,6 +1,15 @@
 terraform {
   required_version = "~> 1.16"
 
+    # Remote backend for Terraform state
+  backend "s3" {
+    bucket         = "group3a-tfstate-706967260509"
+    key            = "infra/terraform.tfstate"
+    region         = "eu-north-1"
+    dynamodb_table = "group3a-tflock"
+    encrypt        = true
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"

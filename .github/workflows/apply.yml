@@ -1,50 +1,56 @@
-name: apply
-
+name: deploy
+ 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'infra/**'
-      - '.github/workflows/apply.yml'
-
+    branches: [main]
+ 
 permissions:
-  contents: read
   id-token: write
-
+  contents: read
+ 
+# never two applies at once, even if two merges land together
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+ 
 jobs:
-  terraform-apply:
-    name: Deploy Infrastructure
+  ship:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: infra
-
+    env:
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+ 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials through OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v4
+ 
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
-
-      - name: Terraform init
-        run: terraform init -input=false
-
-      - name: Terraform validate
-        run: terraform validate
-
-      - name: Terraform plan
-        run: terraform plan -input=false -out=tfplan
-
-      - name: Terraform apply
-        run: terraform apply -input=false -auto-approve tfplan
+ 
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+ 
+      - name: Build and push the image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPO: ${{ vars.ECR_REPO }}
+          TAG: ${{ github.sha }}
+        run: |
+          docker build --platform linux/amd64 \
+            -t $REGISTRY/$REPO:$TAG app
+          docker push $REGISTRY/$REPO:$TAG
+ 
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+ 
+      - name: Apply
+        working-directory: infra
+        run: |
+          terraform init
+          terraform apply -auto-approve \
+            -var-file=ci.tfvars \
+            -var="image_tag=${{ github.sha }}"
+ 
+      - name: Show the URL
+    

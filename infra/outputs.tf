@@ -4,5 +4,6 @@ output "app_url" {
 }
 
 output "db_endpoint" {
-  value = aws_db_instance.tasks.address
+  description = "RDS database endpoint"
+  value       = aws_db_instance.tasks.address
 }

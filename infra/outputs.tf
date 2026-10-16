@@ -1,5 +1,5 @@
 output "app_url" {
-  description = "Open this in a browser"
+  description = "Open this URL in a browser"
   value       = "http://${aws_lb.web.dns_name}"
 }
 

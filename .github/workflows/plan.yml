@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'first-terraform/infra/**'
+      - 'infra/**'
       - '.github/workflows/plan.yml'
 
 permissions:
@@ -20,7 +20,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: first-terraform/infra
+        working-directory: infra
 
     steps:
       - name: Checkout repository

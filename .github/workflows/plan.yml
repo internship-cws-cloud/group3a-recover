@@ -1,51 +1,44 @@
-name: Terraform Plan
-
+name: plan
+ 
 on:
   pull_request:
-    branches:
-      - main
     paths:
-      - 'first-terraform/infra/**'
-      - '.github/workflows/terraform-plan.yml'
-
+      - "infra/**"
+      - ".github/workflows/**"
+ 
 permissions:
+  id-token: write        # required to request the OIDC token
   contents: read
-  id-token: write
-  pull-requests: write
-
+  pull-requests: write   # so it can comment the plan on the PR
+ 
 jobs:
-  terraform-plan:
-    name: Validate and Plan
+  plan:
     runs-on: ubuntu-latest
-
     defaults:
       run:
-        working-directory: first-terraform/infra
-
+        working-directory: infra
+    env:
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+ 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials through OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v4
+ 
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
-
-      - name: Terraform format check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform init
-        run: terraform init -input=false
-
-      - name: Terraform validate
-        run: terraform validate
-
-      - name: Terraform plan
-        run: terraform plan -input=false -no-color
+ 
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16
+ 
+      - run: terraform init
+      - run: terraform fmt -check
+      - run: terraform validate
+ 
+      # -lock=false because the plan role is read-only and cannot
+      # write a lock row. Safe here: a plan changes nothing.
+      - run: |
+          terraform plan -no-color -lock=false \
+            -var-file=ci.tfvars \
+            -var="image_tag=${{ github.sha }}"

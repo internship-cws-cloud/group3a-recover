@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='9' fill='%232E7D64'/></svg>">
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- the machine -->
+  <aside class="machine">
+    <h1 class="wordmark">Task<br>tracker</h1>
+
+    <div class="pulse {{ 'is-broken' if broken else '' }}">
+      <span class="dot"></span>
+      <span class="state">{{ 'degraded' if broken else 'healthy' }}</span>
+    </div>
+
+    <dl class="facts">
+      <dt>served by</dt>
+      <dd class="serial">{{ instance }}</dd>
+
+      <dt>uptime</dt>
+      <dd>{{ uptime }}</dd>
+
+      <dt>requests</dt>
+      <dd id="reqs">{{ requests }}</dd>
+
+      <dt>storage</dt>
+      <dd>{{ db_kind }}</dd>
+
+      <dt>version</dt>
+      <dd>{{ version }}</dd>
+    </dl>
+
+    <p class="hint">
+      These numbers belong to one running copy. Scale up and refresh, and
+      <em>served by</em> will change as the load balancer picks a different one.
+    </p>
+
+    <nav class="probes">
+      <a href="/health">/health</a>
+      <a href="/metrics">/metrics</a>
+      <a href="/api/tasks">/api/tasks</a>
+    </nav>
+  </aside>
+
+  <!-- the application -->
+  <main class="work">
+
+    <header class="work-head">
+      <h2>Things to do</h2>
+      <p class="count">
+        {% if open_count %}{{ open_count }} open{% else %}nothing open{% endif %}{% if done_count %}, {{ done_count }} done{% endif %}
+      </p>
+    </header>
+
+    <form class="compose" action="{{ url_for('add_task') }}" method="post">
+      <input type="text" name="title" placeholder="What needs doing?"
+             maxlength="200" autocomplete="off" required>
+      <button type="submit">Add task</button>
+    </form>
+
+    {% if tasks %}
+    <ul class="tasks">
+      {% for t in tasks %}
+      <li class="task {{ 'is-done' if t.done else '' }}">
+        <form action="{{ url_for('toggle_task', task_id=t.id) }}" method="post" class="tick">
+          <button type="submit" aria-label="{{ 'Mark as not done' if t.done else 'Mark as done' }}">
+            <span class="box">
+              {% if t.done %}
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg>
+              {% endif %}
+            </span>
+          </button>
+        </form>
+
+        <span class="title">{{ t.title }}</span>
+
+        <form action="{{ url_for('delete_task', task_id=t.id) }}" method="post" class="remove">
+          <button type="submit" aria-label="Delete this task">Delete</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">Nothing here yet. Add the first task above.</p>
+    {% endif %}
+
+  </main>
+</div>
+
+<script>
+  // Keep the request counter honest without reloading the page.
+  // It is the one live thing on the page, so it is worth showing.
+  const el = document.getElementById('reqs');
+  if (el && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setInterval(async () => {
+      try {
+        const r = await fetch('/health');
+        const j = await r.json();
+        if (j.instance && j.instance !== el.dataset.seen) {
+          el.dataset.seen = j.instance;
+        }
+        el.textContent = Number(el.textContent) + 1;
+      } catch (e) { /* offline is fine, leave the number alone */ }
+    }, 5000);
+  }
+</script>
+</body>
+</html>

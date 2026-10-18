@@ -1,0 +1,32 @@
+# Local development only. AWS never sees this file.
+#
+#   docker compose up --build          -> sqlite, like week 2
+#   docker compose --profile pg up     -> postgres, like week 3
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/tasks.db}
+      APP_VERSION: local
+      BREAK_TOKEN: ${BREAK_TOKEN:-}
+    volumes:
+      - taskdata:/data
+
+  db:
+    image: postgres:16-alpine
+    profiles: ["pg"]
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: tasks
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  taskdata:
+  pgdata:

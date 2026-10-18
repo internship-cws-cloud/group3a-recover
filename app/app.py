@@ -32,7 +32,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 # here, which is what lets the same image run on your laptop and on AWS.
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:////data/tasks.db")
-APP_VERSION  = os.environ.get("APP_VERSION", "dev")
+APP_VERSION  = os.environ.get("APP_VERSION", "dev")[:7]
 BREAK_TOKEN  = os.environ.get("BREAK_TOKEN", "")
 PORT         = int(os.environ.get("PORT", "8080"))
 

@@ -1,5 +1,5 @@
-output "app_url" {
-  description = "Open this URL in a browser"
+output "alb_url" {
+  description = "URL of the Task Tracker Application Load Balancer"
   value       = "http://${aws_lb.web.dns_name}"
 }
 
